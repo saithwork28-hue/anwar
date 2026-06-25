@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #f8fafc;
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .logo-container {
+            margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            text-decoration: none; color: #0f172a; font-weight: 700; font-size: 20px;
+        }
+        .custom-logo {
+            width: auto; max-width: 100%; height: 50px; object-fit: contain;
+        }
+        .login-wrapper {
+            position: relative; width: 100%; max-width: 380px; margin: 0 20px; z-index: 10;
+        }
+        .login-form-container {
+            background-color: #ffffff; border-radius: 12px;
+            padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f1f5f9; color: #0f172a;
+            transition: box-shadow 0.3s ease;
+        }
+        .form-header { text-align: center; margin-bottom: 20px; }
+        .form-header h2 { font-size: 26px; font-weight: 700; margin-bottom: 8px; color: #0f172a; letter-spacing: -0.5px; }
+        .form-header p { font-size: 15px; color: #64748b; }
+        .input-group { margin-bottom: 16px; display: flex; flex-direction: column; }
+        .input-group label { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #475569; }
+        .input-group input {
+            width: 100%; padding: 10px 14px; background-color: #ffffff;
+            border: 1px solid #cbd5e1; border-radius: 8px;
+            font-size: 15px; font-family: inherit; color: #0f172a;
+            transition: all 0.2s ease; outline: none;
+        }
+        .input-group input::placeholder { color: #94a3b8; }
+        .input-group input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+        .password-wrapper { position: relative; display: flex; align-items: center; }
+        .password-wrapper input { padding-right: 40px; }
+        .toggle-password {
+            position: absolute; right: 12px; background: none; border: none;
+            color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 0;
+            transition: color 0.2s ease;
+        }
+        .toggle-password:hover { color: #475569; }
+        .submit-btn {
+            width: 100%; padding: 12px; margin-top: 10px;
+            background-color: #2563eb; color: #ffffff; border: none;
+            border-radius: 8px; font-size: 15px; font-weight: 600;
+            font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+        }
+        .submit-btn:hover { background-color: #1d4ed8; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+        .submit-btn:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+
+        /* Divider and Google Button */
+        .divider {
+            display: flex; align-items: center; text-align: center; margin: 20px 0; color: #94a3b8; font-size: 13px; font-weight: 500;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; border-bottom: 1px solid #e2e8f0;
+        }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        .google-btn {
+            width: 100%; padding: 12px; background-color: #ffffff; color: #475569;
+            border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; font-weight: 600;
+            font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .google-btn:hover { background-color: #f8fafc; border-color: #94a3b8; color: #0f172a; }
+
+        /* hCaptcha widget container */
+        .captcha-group {
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Message Box */
+        .message-box {
+            margin-top: 16px; padding: 12px 16px; border-radius: 8px;
+            font-size: 14px; text-align: center; display: none; font-weight: 500;
+        }
+        .message-box.success { background-color: #dcfce7; color: #065f46; border: 1px solid #a7f3d0; }
+        .message-box.error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* Toggle link */
+        .toggle-link {
+            text-align: center; margin-top: 16px;
+            font-size: 14px; color: #64748b;
+        }
+        .toggle-link span:last-child {
+            color: #2563eb; cursor: pointer; font-weight: 600; transition: color 0.2s;
+        }
+        .toggle-link span:last-child:hover { color: #1d4ed8; text-decoration: underline; }
+        .forgot-link { color: #2563eb; font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.2s; }
+        .forgot-link:hover { color: #1d4ed8; text-decoration: underline; }
+
+        /* Mobile number popup (shown for Google sign-ins missing a mobile number) */
+        .popup-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 50; align-items: center; justify-content: center;
+        }
+        .popup-box {
+            background: #ffffff; border-radius: 12px; padding: 30px;
+            max-width: 380px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .popup-box h3 { margin-bottom: 8px; color: #111827; font-size: 20px; }
+        .popup-box p { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
+
+        @media (max-width: 480px) {
+            .logo-container {
+                margin-bottom: 16px;
+            }
+            .custom-logo { height: auto; max-height: 45px; }
+            body {
+                padding: 40px 0;
+                justify-content: flex-start;
+            }
+            .login-form-container { padding: 32px 24px; }
+            .form-header h2 { font-size: 24px; }
+            .login-wrapper { margin: 0 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Form -->
+    <div class="login-wrapper">
+        <div class="login-form-container">
+            <a href="#" class="logo-container">
+                <img src="../Screenshot_2026-06-15_094035-removebg-preview.png" alt="Company Logo" class="custom-logo">
+            </a>
+            <div class="form-header">
+                <h2 id="formTitle">Welcome</h2>
+                <p id="formSubtitle">Please enter your details to sign up</p>
+            </div>
+
+            <div class="input-group" id="nameGroup">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" placeholder="Enter your full name">
+            </div>
+            <div class="input-group" id="mobileGroup">
+                <label for="mobileNumber">Mobile Number</label>
+                <input type="tel" id="mobileNumber" placeholder="Enter your mobile number">
+            </div>
+            <div class="input-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="Enter your email address">
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="••••••••">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', this)" aria-label="Toggle password visibility">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- hCaptcha widget -->
+            <div class="captcha-group">
+                <div class="h-captcha" data-sitekey="127666e6-b310-476e-b6ee-7aa87e4a0332"></div>
+            </div>
+
+            <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Sign Up</button>
+
+            <p id="forgotPasswordContainer" style="text-align:center; margin-top:12px; display: none;">
+                <span onclick="forgotPassword()" class="forgot-link">
+                    Forgot Password?
+                </span>
+            </p>
+
+            <div class="divider">OR</div>
+
+            <button class="google-btn" onclick="signInWithGoogle()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <!-- Success / Error Message -->
+            <div class="message-box" id="messageBox"></div>
+
+            <!-- Toggle between Login and Sign Up -->
+            <div class="toggle-link">
+                <span id="toggleText">Already have an account? </span>
+                <span onclick="toggleMode()">Login</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Number Popup (shown after Google sign-in if mobile number is missing) -->
+    <div id="mobilePopupOverlay" class="popup-overlay">
+        <div class="popup-box">
+            <h3>One last step</h3>
+            <p>Please enter your mobile number to complete your profile.</p>
+            <div class="input-group">
+                <label for="popupMobile">Mobile Number</label>
+                <input type="tel" id="popupMobile" placeholder="Enter your mobile number">
+            </div>
+            <button class="submit-btn" onclick="savePopupMobile()">Save &amp; Continue</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const { createClient } = window.supabase;
+        const SUPABASE_URL = 'https://owucxxsxsknujeofdbwx.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_zHDocadfoObmE3XGK1epYw_9R7xqbB6';
+        const client = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Mode: 'signup' or 'login'
+        let currentMode = 'signup'
+
+        // Toggle between Login and Sign Up
+        function toggleMode() {
+            currentMode = currentMode === 'signup' ? 'login' : 'signup'
+
+            const isSignup = currentMode === 'signup'
+            document.getElementById('formTitle').textContent = isSignup ? 'Welcome' : 'Welcome Back'
+            document.getElementById('formSubtitle').textContent = isSignup ? 'Please enter your details to sign up' : 'Please enter your details to login'
+            document.getElementById('submitBtn').textContent = isSignup ? 'Sign Up' : 'Login'
+            document.getElementById('nameGroup').style.display = isSignup ? 'flex' : 'none'
+            document.getElementById('mobileGroup').style.display = isSignup ? 'flex' : 'none'
+            document.getElementById('toggleText').textContent = isSignup ? 'Already have an account? ' : "Don't have an account? "
+            hideMessage()
+            document.getElementById('forgotPasswordContainer').style.display = isSignup ? 'none' : 'block'
+            if (typeof hcaptcha !== 'undefined') hcaptcha.reset()
+        }
+
+        // Show message box
+        function showMessage(text, type) {
+            const box = document.getElementById('messageBox')
+            box.textContent = text
+            box.className = 'message-box ' + type
+            box.style.display = 'block'
+        }
+
+        function hideMessage() {
+            document.getElementById('messageBox').style.display = 'none'
+        }
+
+        // Main handler
+        async function handleSubmit() {
+            const email    = document.getElementById('email').value.trim()
+            const password = document.getElementById('password').value.trim()
+            const btn      = document.getElementById('submitBtn')
+
+            if (!email || !password) {
+                showMessage('Please provide both your email address and password.', 'error')
+                return
+            }
+            
+            if (currentMode === 'signup') {
+                const mobile = document.getElementById('mobileNumber').value.trim()
+                if (!/^\d{10}$/.test(mobile)) {
+                    showMessage('Please enter a valid 10-digit mobile number.', 'error')
+                    return
+                }
+            }
+
+            const captchaToken = typeof hcaptcha !== 'undefined' ? hcaptcha.getResponse() : ''
+            if (!captchaToken) {
+                showMessage('Please complete the security verification to proceed.', 'error')
+                return
+            }
+
+            btn.disabled = true
+            btn.textContent = 'Processing...'
+            hideMessage()
+
+            if (currentMode === 'signup') {
+                await handleSignUp(email, password, captchaToken)
+            } else {
+                await handleLogin(email, password, captchaToken)
+            }
+
+            btn.disabled = false
+            btn.textContent = currentMode === 'signup' ? 'Sign Up' : 'Login'
+        }
+
+        // Sign Up
+        async function handleSignUp(email, password, captchaToken) {
+            const fullName = document.getElementById('fullName').value.trim()
+            const mobile   = document.getElementById('mobileNumber').value.trim()
+
+            const { error } = await client.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { full_name: fullName, mobile: mobile },  // saved to user profile
+                    captchaToken: captchaToken
+                }
+            })
+
+            if (error) {
+                showMessage(error.message, 'error')
+            } else {
+                showMessage('Account created successfully. Switching to login...', 'success')
+                // Auto switch to login after signup
+                setTimeout(() => toggleMode(), 2000)
+            }
+
+            if (typeof hcaptcha !== 'undefined') hcaptcha.reset()
+        }
+
+        // Login
+        async function handleLogin(email, password, captchaToken) {
+            const { error } = await client.auth.signInWithPassword({
+                email,
+                password,
+                options: { captchaToken: captchaToken }
+            })
+
+            if (error) {
+                showMessage(error.message, 'error')
+            } else {
+                showMessage('Login successful. Redirecting securely...', 'success')
+                setTimeout(() => window.location.href = 'https://saithwork28-hue.github.io/projects/', 1500)
+            }
+
+            if (typeof hcaptcha !== 'undefined') hcaptcha.reset()
+        }
+        
+        // Forgot Password
+        async function forgotPassword() {
+            const email = document.getElementById('email').value.trim()
+
+            if (!email) {
+                showMessage('Please enter your email address to reset your password.', 'error')
+                return
+            }
+
+            const captchaToken = typeof hcaptcha !== 'undefined' ? hcaptcha.getResponse() : ''
+            if (!captchaToken) {
+                showMessage('Please complete the security verification to proceed.', 'error')
+                return
+            }
+
+            // Dynamically constructs the URL so it works on both localhost and production
+            const { error } = await client.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + window.location.pathname.replace('index.html', '') + 'reset.html',
+                captchaToken: captchaToken
+            })
+
+            if (error) {
+                showMessage(error.message, 'error')
+            } else {
+                showMessage('A password reset link has been sent to your email address.', 'success')
+            }
+
+            if (typeof hcaptcha !== 'undefined') hcaptcha.reset()
+        }
+
+        // Google Sign-In
+        async function signInWithGoogle() {
+            const { error } = await client.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: 'https://saithwork28-hue.github.io/projects/'
+                }
+            })
+
+            if (error) {
+                showMessage(error.message, 'error')
+            }
+        }
+
+        // ---- Mobile number collection for Google sign-ins ----
+
+        // Checks if the logged-in user is missing a mobile number, and if so, shows the popup.
+        // Runs automatically every time this page loads (including the redirect back from Google).
+        async function checkMobileNumber() {
+            const { data: { user } } = await client.auth.getUser()
+
+            if (user && !user.user_metadata?.mobile) {
+                document.getElementById('mobilePopupOverlay').style.display = 'flex'
+            }
+        }
+
+        // Saves the mobile number entered in the popup to the user's profile
+        async function savePopupMobile() {
+            const mobile = document.getElementById('popupMobile').value.trim()
+
+            if (!/^\d{10}$/.test(mobile)) {
+                alert('Please provide a valid 10-digit mobile number.')
+                return
+            }
+
+            const { error } = await client.auth.updateUser({
+                data: { mobile: mobile }
+            })
+
+            if (error) {
+                alert(error.message)
+            } else {
+                document.getElementById('mobilePopupOverlay').style.display = 'none'
+                showMessage('Mobile number saved successfully!', 'success')
+            }
+        }
+
+        // Run the check automatically when the page loads
+        checkMobileNumber()
+
+        // Allow Enter key to submit
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleSubmit()
+        })
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+            } else {
+                input.type = 'password';
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+            }
+        }
+    </script>
+</body>
+</html>
